@@ -1,0 +1,3 @@
+C:/Users/catal/CLionProjects/SSD-SAD-improvement/cmake-build-debug/CMakeFiles/SSD_SAD_improvement.dir
+C:/Users/catal/CLionProjects/SSD-SAD-improvement/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/catal/CLionProjects/SSD-SAD-improvement/cmake-build-debug/CMakeFiles/rebuild_cache.dir
