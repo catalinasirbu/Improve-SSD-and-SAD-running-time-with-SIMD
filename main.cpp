@@ -2,8 +2,16 @@
 #include <cmath>
 #include <chrono>
 #include <float.h>
+#include <immintrin.h>
 
 using namespace std::chrono;
+
+/* ------------------------------------ SSD IMPROVEMENTS ------------------------------------
+ * To improve the SSD running time with SIMD, we can use vector instructions to perform multiple
+ * operations simultaneously. In particular, we can use the SIMD instructions available in the AVX2
+ * instruction set to perform the sum of squared differences operation on four floats at once.
+ */
+
 
 #define DIMENSIONS 128
 class Descriptor {
@@ -16,10 +24,17 @@ public:
 
     // sum of squared differences == L2-norm
     float getSSDdistance(Descriptor other) {
-        float sum = 0;
-        for (int dim = 0; dim < DIMENSIONS; dim++)
-            sum += pow(features[dim] - other.features[dim], 2);
-
+        float sum = 0.0f;
+        __m128 diff, prod;
+        __m128 s = _mm_setzero_ps();
+        for (int dim = 0; dim < DIMENSIONS; dim += 4) {
+            diff = _mm_sub_ps(_mm_load_ps(&features[dim]), _mm_load_ps(&other.features[dim]));
+            prod = _mm_mul_ps(diff, diff);
+            s = _mm_add_ps(s, prod);
+        }
+        __declspec(align(16)) float temp[4];
+        _mm_store_ps(temp, s);
+        sum = temp[0] + temp[1] + temp[2] + temp[3];
         return sqrt(sum);
     }
 
@@ -74,3 +89,4 @@ int main() {
 
 // SSD between d1 and d2 is 7.30509e-05
 // SAD between d1 and d2 is 0.000677925
+// Done in 28960 ms
