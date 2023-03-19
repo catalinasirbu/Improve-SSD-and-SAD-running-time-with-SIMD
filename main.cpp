@@ -3,6 +3,8 @@
 #include <chrono>
 #include <float.h>
 #include <immintrin.h>
+#include <omp.h>
+
 
 using namespace std::chrono;
 
@@ -12,17 +14,11 @@ using namespace std::chrono;
 // Output:
 // SSD between d1 and d2 is 7.30509e-05
 // SAD between d1 and d2 is 0.000677925
-// Done in 27653 ms
+// Done in 26973 ms
 
 // CPU used: Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
 // gcc (x86_64-posix-seh-rev2, Built by MinGW-W64 project) 12.2.0
-
-
-/* ------------------------------------ SSD IMPROVEMENTS ------------------------------------
- * To improve the SSD running time with SIMD, we can use vector instructions to perform multiple
- * operations simultaneously. In particular, we can use the SIMD instructions available in the AVX2
- * instruction set to perform the sum of squared differences operation on four floats at once.
- */
+// flags added: -mavx2
 
 #define DIMENSIONS 128
 class Descriptor {
@@ -51,10 +47,16 @@ public:
 
     // sum of absolute differences == L1-norm
     float getSADdistance(Descriptor other) {
-        float sum = 0;
-        for (int dim = 0; dim < DIMENSIONS; dim++)
-            sum += fabs(features[dim] - other.features[dim]);
-
+        float sum = 0.0f;
+        __m128 diff, mask1, mask2, absdiff;
+        for (int dim = 0; dim < DIMENSIONS; dim += 4) {
+            diff = _mm_sub_ps(_mm_load_ps(&features[dim]), _mm_load_ps(&other.features[dim]));
+            mask1 = _mm_cmplt_ps(diff, _mm_setzero_ps());
+            mask2 = _mm_cmplt_ps(_mm_setzero_ps(), diff);
+            absdiff = _mm_and_ps(mask1, _mm_sub_ps(_mm_setzero_ps(), diff));
+            absdiff = _mm_or_ps(absdiff, _mm_and_ps(mask2, diff));
+            sum += absdiff[0] + absdiff[1] + absdiff[2] + absdiff[3];
+        }
         return sum;
     }
 };
@@ -79,6 +81,8 @@ int main() {
               d1.getSADdistance(d2)<< std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
+
+    #pragma omp parallel for
     for (int i = 0; i < NUM_OF_POINTS; i++) {
         float mindistance = FLT_MAX;
         for (int j = 0; j < NUM_OF_POINTS; j++) {
