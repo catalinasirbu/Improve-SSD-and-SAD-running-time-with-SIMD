@@ -6,12 +6,23 @@
 
 using namespace std::chrono;
 
+// Github link:
+// https://github.com/catalinasirbu/Improve-SSD-and-SAD-running-time-with-SIMD.git
+
+// Output:
+// SSD between d1 and d2 is 7.30509e-05
+// SAD between d1 and d2 is 0.000677925
+// Done in 27653 ms
+
+// CPU used: Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
+// gcc (x86_64-posix-seh-rev2, Built by MinGW-W64 project) 12.2.0
+
+
 /* ------------------------------------ SSD IMPROVEMENTS ------------------------------------
  * To improve the SSD running time with SIMD, we can use vector instructions to perform multiple
  * operations simultaneously. In particular, we can use the SIMD instructions available in the AVX2
  * instruction set to perform the sum of squared differences operation on four floats at once.
  */
-
 
 #define DIMENSIONS 128
 class Descriptor {
@@ -84,9 +95,3 @@ int main() {
 
     return 0;
 }
-
-
-
-// SSD between d1 and d2 is 7.30509e-05
-// SAD between d1 and d2 is 0.000677925
-// Done in 28960 ms
